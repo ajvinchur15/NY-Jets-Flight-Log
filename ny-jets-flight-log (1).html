@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NY Jets Flight Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --jets-green: #125740;
+    --jets-green-dark: #0b3b2b;
+    --paper: #F7F5EF;
+    --paper-2: #EFEBE0;
+    --ink: #1B1B18;
+    --ink-soft: #56564F;
+    --gold: #B08A3E;
+    --line: rgba(18,87,64,0.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.6;
+  }
+  .masthead {
+    background: var(--jets-green);
+    color: var(--paper);
+    padding: 3rem 1.5rem 2.5rem;
+    text-align: center;
+    position: relative;
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+  .masthead p {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: #CFE3DA;
+    margin: 0.6rem 0 0;
+    font-size: 1.05rem;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .week-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding: 1.25rem 0 0;
+    border-bottom: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+  .week-tab {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.6rem 0.85rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .week-tab.active {
+    color: var(--jets-green);
+    border-bottom-color: var(--jets-green);
+    font-weight: 500;
+  }
+  .week-tab.unpublished { color: var(--ink-soft); font-style: italic; }
+  .add-week-tab {
+    flex: 0 0 auto;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+    font-size: 1.1rem;
+    color: var(--jets-green);
+    cursor: pointer;
+    margin-left: 0.3rem;
+  }
+  .add-week-tab:hover { background: var(--paper-2); }
+
+  .week-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 0 1rem;
+  }
+  .week-toolbar .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--gold);
+    letter-spacing: 0.3px;
+  }
+  button.edit-week {
+    background: var(--jets-green);
+    color: var(--paper);
+    border: none;
+    padding: 0.55rem 1rem;
+    border-radius: 4px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  button.edit-week:hover { background: var(--jets-green-dark); }
+  button.remove-week {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-left: 0.75rem;
+  }
+  button.remove-week:hover { color: #A3342E; }
+
+  .form-panel {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin: 0 0 1.5rem;
+    display: none;
+  }
+  .form-panel.open { display: block; }
+  .form-panel label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+  }
+  .form-panel input, .form-panel textarea {
+    width: 100%;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--paper);
+    color: var(--ink);
+    margin-bottom: 1rem;
+    resize: vertical;
+  }
+  .form-panel textarea { min-height: 160px; line-height: 1.6; }
+  .form-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+  .form-actions button {
+    padding: 0.55rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .form-actions button.primary {
+    background: var(--jets-green);
+    color: var(--paper);
+    border: none;
+  }
+  .error { color: #A3342E; font-size: 0.8rem; margin: -0.6rem 0 1rem; display: none; }
+  .error.show { display: block; }
+
+  .week-content { padding-bottom: 2rem; }
+  .week-content h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.6rem;
+    margin: 0 0 0.75rem;
+  }
+  .week-content .body-text {
+    white-space: pre-wrap;
+    font-size: 1rem;
+  }
+  .week-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.75rem;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--ink-soft);
+  }
+  .empty h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+  footer.note {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    padding: 1rem 1.5rem 3rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <svg viewBox="0 0 120 140" width="104" height="121" style="margin: 0 auto 0.75rem; display: block;">
+    <circle cx="60" cy="52" r="48" fill="none" stroke="#F7F5EF" stroke-width="2"/>
+    <circle cx="60" cy="52" r="40" fill="none" stroke="#F7F5EF" stroke-width="1"/>
+    <g transform="rotate(-15 60 52)">
+      <path d="M32 52 Q42 36 60 36 Q78 36 88 52 Q78 68 60 68 Q42 68 32 52 Z" fill="#F7F5EF" stroke="#125740" stroke-width="1.5"/>
+      <line x1="41" y1="52" x2="79" y2="52" stroke="#125740" stroke-width="1.2"/>
+      <line x1="49" y1="47" x2="49" y2="57" stroke="#125740" stroke-width="0.8"/>
+      <line x1="60" y1="45" x2="60" y2="59" stroke="#125740" stroke-width="0.8"/>
+      <line x1="71" y1="47" x2="71" y2="57" stroke="#125740" stroke-width="0.8"/>
+    </g>
+    <line x1="16" y1="52" x2="24" y2="52" stroke="#B08A3E" stroke-width="1.5"/>
+    <line x1="96" y1="52" x2="104" y2="52" stroke="#B08A3E" stroke-width="1.5"/>
+    <text x="60" y="128" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-weight="500" font-size="14" letter-spacing="1.2" fill="#F7F5EF">FLIGHT LOG</text>
+  </svg>
+  <h1>NY Jets Flight Log</h1>
+  <p>Weekly dispatches on the New York Jets</p>
+</div>
+
+<div class="wrap">
+  <div class="week-tabs" id="week-tabs"></div>
+
+  <div class="week-toolbar">
+    <span class="label" id="week-label"></span>
+    <div>
+      <button class="edit-week" id="toggle-form">Edit week</button>
+      <button class="remove-week" id="remove-week-btn">Remove week</button>
+    </div>
+  </div>
+
+  <div class="form-panel" id="form-panel">
+    <label for="title-input">Headline</label>
+    <input type="text" id="title-input" placeholder="Jets find their run game against the Dolphins">
+    <div class="error" id="title-error">Enter a headline first.</div>
+
+    <label for="body-input">Entry</label>
+    <textarea id="body-input" placeholder="Write this week's post here..."></textarea>
+    <div class="error" id="body-error">Write something before posting.</div>
+
+    <div class="form-actions">
+      <button id="cancel-btn">Cancel</button>
+      <button class="primary" id="publish-btn">Publish entry</button>
+    </div>
+  </div>
+
+  <div class="week-content" id="week-content"></div>
+</div>
+
+<footer class="note">Entries save to this artifact and are visible to anyone who opens this page. Adding, editing, or removing a week requires the editing password.</footer>
+
+<script>
+const STORAGE_KEY = 'jets-flight-log-weeks';
+const EDIT_PASSWORD = 'Gipper15#+$@'; // change this to your own password
+let weeks = [];
+let activeWeek = 1;
+let unlocked = false;
+
+function requireUnlock() {
+  if (unlocked) return true;
+  const entered = window.prompt('Enter the editing password:');
+  if (entered === null) return false;
+  if (entered === EDIT_PASSWORD) {
+    unlocked = true;
+    return true;
+  }
+  window.alert('Wrong password.');
+  return false;
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+async function loadWeeks() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY, true);
+    weeks = result ? JSON.parse(result.value) : [];
+  } catch (e) {
+    weeks = [];
+  }
+  if (weeks.length === 0) {
+    weeks.push({ number: 1, title: '', body: '', date: null, published: false });
+  }
+  activeWeek = weeks[0].number;
+  render();
+}
+
+async function saveWeeks() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(weeks), true);
+  } catch (e) {
+    console.error('Save failed', e);
+  }
+}
+
+function getActiveWeek() {
+  return weeks.find(w => w.number === activeWeek);
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById('week-tabs');
+  const sorted = [...weeks].sort((a, b) => a.number - b.number);
+  tabsEl.innerHTML = sorted.map(w => `
+    <button class="week-tab ${w.number === activeWeek ? 'active' : ''} ${!w.published ? 'unpublished' : ''}" data-week="${w.number}">Week ${w.number}</button>
+  `).join('') + `<button class="add-week-tab" id="add-week-btn" aria-label="Add next week">+</button>`;
+
+  tabsEl.querySelectorAll('.week-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeWeek = parseInt(btn.getAttribute('data-week'), 10);
+      formPanel.classList.remove('open');
+      toggleBtn.textContent = 'Edit week';
+      render();
+    });
+  });
+
+  document.getElementById('add-week-btn').addEventListener('click', async () => {
+    if (!requireUnlock()) return;
+    const nextNumber = Math.max(...weeks.map(w => w.number)) + 1;
+    weeks.push({ number: nextNumber, title: '', body: '', date: null, published: false });
+    activeWeek = nextNumber;
+    await saveWeeks();
+    render();
+    openForm();
+  });
+}
+
+function renderContent() {
+  const week = getActiveWeek();
+  const labelEl = document.getElementById('week-label');
+  const contentEl = document.getElementById('week-content');
+  const removeBtn = document.getElementById('remove-week-btn');
+
+  labelEl.textContent = `Week ${week.number}`;
+  removeBtn.style.display = weeks.length > 1 ? 'inline' : 'none';
+
+  if (!week.published) {
+    contentEl.innerHTML = `<div class="empty"><h3>Week ${week.number} isn't posted yet</h3><p>Use "Edit week" to write this week's entry.</p></div>`;
+    return;
+  }
+
+  contentEl.innerHTML = `
+    <div class="week-date">${formatDate(week.date)}</div>
+    <h2>${escapeHtml(week.title)}</h2>
+    <div class="body-text">${escapeHtml(week.body)}</div>
+  `;
+}
+
+function render() {
+  renderTabs();
+  renderContent();
+  const week = getActiveWeek();
+  titleInput.value = week.title || '';
+  bodyInput.value = week.body || '';
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+const formPanel = document.getElementById('form-panel');
+const toggleBtn = document.getElementById('toggle-form');
+const cancelBtn = document.getElementById('cancel-btn');
+const publishBtn = document.getElementById('publish-btn');
+const titleInput = document.getElementById('title-input');
+const bodyInput = document.getElementById('body-input');
+const titleError = document.getElementById('title-error');
+const bodyError = document.getElementById('body-error');
+const removeWeekBtn = document.getElementById('remove-week-btn');
+
+function openForm() {
+  const week = getActiveWeek();
+  titleInput.value = week.title || '';
+  bodyInput.value = week.body || '';
+  formPanel.classList.add('open');
+  toggleBtn.textContent = 'Close';
+}
+
+toggleBtn.addEventListener('click', () => {
+  if (!formPanel.classList.contains('open')) {
+    if (!requireUnlock()) return;
+    openForm();
+  } else {
+    formPanel.classList.remove('open');
+    toggleBtn.textContent = 'Edit week';
+  }
+});
+
+cancelBtn.addEventListener('click', () => {
+  titleError.classList.remove('show');
+  bodyError.classList.remove('show');
+  formPanel.classList.remove('open');
+  toggleBtn.textContent = 'Edit week';
+});
+
+titleInput.addEventListener('input', () => titleError.classList.remove('show'));
+bodyInput.addEventListener('input', () => bodyError.classList.remove('show'));
+
+publishBtn.addEventListener('click', async () => {
+  const title = titleInput.value.trim();
+  const body = bodyInput.value.trim();
+  let valid = true;
+  if (!title) { titleError.classList.add('show'); valid = false; }
+  if (!body) { bodyError.classList.add('show'); valid = false; }
+  if (!valid) return;
+
+  const week = getActiveWeek();
+  week.title = title;
+  week.body = body;
+  week.date = new Date().toISOString();
+  week.published = true;
+  await saveWeeks();
+  formPanel.classList.remove('open');
+  toggleBtn.textContent = 'Edit week';
+  render();
+});
+
+removeWeekBtn.addEventListener('click', async () => {
+  if (!requireUnlock()) return;
+  if (weeks.length <= 1) return;
+  weeks = weeks.filter(w => w.number !== activeWeek);
+  activeWeek = weeks[0].number;
+  await saveWeeks();
+  render();
+});
+
+loadWeeks();
+</script>
+
+</body>
+</html>
